@@ -1,170 +1,118 @@
-# 🤖 AI Code Reviewer
+# ⚡ OmniStream Connector
+### Universal Marketplace & Crypto Bridge for Live Streams & OBS Overlays
 
-A full-stack web application that uses **Groq AI (Llama 3.3 70b)** to automatically review, debug, and fix your code.
-Simply paste your code, select a programming language, and receive instant feedback including bug detection, explanations, and a fully corrected version of your code.
+A full-stack application connecting e-commerce platforms, payment processors, and Web3 crypto checkouts directly to live stream broadcasts (OBS Studio, Streamlabs, Twitch).
 
----
-
-## ✨ Features
-
-- 🧠 **AI-Powered Review** — Uses Groq's Llama 3.3 70b model to understand and analyze your code like a senior developer
-- 💻 **Monaco Editor** — The same code editor that powers VS Code, embedded directly in the browser
-- 🐛 **Bug Detection** — Finds syntax errors, logic errors, and bad practices in your code
-- 🔧 **Auto Fix** — Provides a fully corrected version of your code with explanations
-- 🌐 **Multi-Language Support** — Supports Python, JavaScript, Java, C++, and C
-- ⚡ **Instant Results** — Powered by Groq's ultra-fast inference engine
+Whenever a sale occurs on **Shopify**, **WooCommerce**, **Stripe**, **Web3 / Coinbase Commerce**, or **Twitch EventSub**, OmniStream captures the event, formats the notification, and instantly broadcasts an animated alert with crystal chime audio and AI Text-to-Speech (TTS) onto your stream.
 
 ---
 
-## 🛠️ Tech Stack
+## 🌟 Key Features
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React, Monaco Editor, Axios, React Syntax Highlighter |
-| Backend | FastAPI, Python, Uvicorn |
-| AI Model | Groq API — Llama 3.3 70b |
-| Styling | Inline CSS with VS Code dark theme |
+- 🔌 **Universal Marketplace Webhooks:**
+  - **Shopify:** Captures orders, line items, customer names, and dollar totals.
+  - **WooCommerce:** WordPress/WooCommerce webhook listener.
+  - **Stripe:** Direct credit card tips, merchandise purchases, and checkout sessions.
+  - **Web3 / Crypto Commerce:** Ingests confirmations for USDC, Bitcoin, Ethereum, and EVM transfers.
+  - **Twitch EventSub:** Handles Bits/cheers, subscriptions, and channel point redemptions.
+  - **Universal Custom Webhook:** JSON-based API for any POS, TikTok Shop, or reseller script.
+
+- 🎥 **OBS Studio & Streamlabs Ready:**
+  - Dedicated transparent browser source overlay at `/obs-overlay`.
+  - Sequential Alert Queue to ensure no alert is missed during high-volume sales.
+  - Customizable theme presets: *Cyberpunk Neon, Twitch Violet, Gold Royalty, Minimal Sleek, Retro Arcade*.
+  - Real-time Server-Sent Events (SSE) synchronization.
+
+- 🗣️ **React Text-to-Speech (TTS) Engine:**
+  - Integrated browser-native SpeechSynthesis with customizable voice models, speech rate, and pitch.
+  - Built-in **Streamer Safety & AI Moderation Guard** (auto-censors vulgarity and limits spam length).
+
+- 🔊 **Web Audio Synthesized Alert Chimes:**
+  - 100% reliable zero-dependency sound generator (Crystal Bell, Ka-Ching Cash Register, 8-Bit Arcade Power-Up, Victory Fanfare, Sub-Bass Impact).
 
 ---
 
-## 📁 Project Structure
+## 🛠️ Architecture
 
 ```
-ai-code-reviewer/
-│
-├── backend/
-│   ├── main.py            # FastAPI server — handles API routes
-│   ├── reviewer.py        # Groq AI logic — sends code to AI and returns review
-│   ├── requirement.txt    # Python dependencies
-│   └── .env               # API key (not uploaded to GitHub)
-│
-├── frontend/
-│   ├── public/
-│   │   └── index.html     # Base HTML file
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── CodeInput.jsx      # Monaco Editor + language selector + button
-│   │   │   └── ReviewOutput.jsx   # Displays AI review with syntax highlighting
-│   │   ├── App.jsx        # Main layout — connects all components
-│   │   ├── api.js         # Axios API call to backend
-│   │   └── index.js       # React entry point
-│   └── package.json       # JavaScript dependencies
-│
-├── .gitignore
-└── README.md
+[ Shopify / Stripe / Crypto / Twitch ]
+                 │
+                 ▼ (HTTP POST Webhooks)
+     ┌───────────────────────┐
+     │  Express Server:3000  │
+     │  /api/webhooks/*      │
+     └───────────┬───────────┘
+                 │
+                 ▼ (Server-Sent Events / SSE)
+   ┌───────────────────────────┬───────────────────────────┐
+   │                           │                           │
+   ▼                           ▼                           ▼
+[ OBS Studio Browser Source ] [ Streamlabs Desktop ]    [ Streamer Dashboard ]
+(Transparent /obs-overlay)     (Live Alerts)            (Control & Analytics)
 ```
 
 ---
 
-## 🚀 How to Run Locally
+## 🚀 Quickstart & Setup
 
-### Prerequisites
-- Python 3.8+
-- Node.js 16+
-- A free Groq API key from [console.groq.com](https://console.groq.com)
-
----
-
-### Step 1 — Clone the repository
+### 1. Install & Build
 
 ```bash
-git clone https://github.com/jonsnow273/code-reviewer.git
-cd code-reviewer
-```
-
----
-
-### Step 2 — Setup Backend
-
-```bash
-cd backend
-pip install -r requirement.txt
-```
-
-Create a `.env` file inside the `backend` folder:
-
-```
-GROQ_API_KEY=your-groq-api-key-here
-```
-
-Start the backend server:
-
-```bash
-uvicorn main:app --reload
-```
-
-Backend will run on `http://localhost:8000`
-
----
-
-### Step 3 — Setup Frontend
-
-Open a new terminal:
-
-```bash
-cd frontend
 npm install
+npm run build
+```
+
+### 2. Start the Server
+
+```bash
 npm start
+# or: node server.js
 ```
 
-Frontend will run on `http://localhost:3000` and open automatically in your browser.
+The application runs on `http://0.0.0.0:3000`.
 
 ---
 
-### Step 4 — Use the App
+## 🎥 Setting Up in OBS Studio
 
-1. Select your programming language from the dropdown
-2. Paste your code into the Monaco Editor
-3. Click **"Review Code"**
-4. View the AI's analysis on the right panel — bugs found, explanation, and fixed code
-
----
-
-## 🔑 Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `GROQ_API_KEY` | Your free Groq API key from console.groq.com |
-
-> ⚠️ Never share your API key or push it to GitHub. Always keep it in the `.env` file.
+1. In OBS Studio, go to your **Sources** panel, click **+**, and select **Browser**.
+2. Name it `OmniStream Overlay`.
+3. Set the **URL** to:
+   ```
+   http://localhost:3000/obs-overlay
+   ```
+4. Set **Width**: `1920` and **Height**: `1080`.
+5. Check **Control audio via OBS** to mix alert chimes and TTS in your stream audio.
+6. Click **OK**.
 
 ---
 
-## 📸 How It Works
+## 📡 Webhook Endpoints & Payloads
 
+| Platform | Webhook Endpoint | Supported Events |
+|---|---|---|
+| **Shopify** | `POST /api/webhooks/shopify` | `orders/create`, `orders/paid` |
+| **Crypto** | `POST /api/webhooks/crypto` | `charge:confirmed`, `payment:detected` |
+| **Twitch** | `POST /api/webhooks/twitch` | `channel.cheer`, `channel.subscribe`, `channel_points` |
+| **Stripe** | `POST /api/webhooks/stripe` | `checkout.session.completed`, `payment_intent.succeeded` |
+| **WooCommerce** | `POST /api/webhooks/woocommerce` | `order.created`, `order.updated` |
+| **Custom** | `POST /api/webhooks/custom` | Any JSON payload |
+
+### Custom Webhook Example
+
+```bash
+curl -X POST http://localhost:3000/api/webhooks/custom \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user": "Elena Vance",
+    "amount": 29.99,
+    "currency": "USD",
+    "item": "Cyberpunk Art Print",
+    "message": "Love your content!"
+  }'
 ```
-User pastes code in Monaco Editor
-            ↓
-Clicks "Review Code" button
-            ↓
-React sends code + language to FastAPI backend
-            ↓
-FastAPI calls Groq AI (Llama 3.3 70b)
-            ↓
-Groq returns bugs found + fixed code + explanation
-            ↓
-React displays the review with syntax highlighting
-```
-
----
-
-## 🌱 Future Improvements
-
-- [ ] Deploy online (Vercel + Render)
-- [ ] Add file upload support (.py, .js, .java)
-- [ ] Save review history
-- [ ] Add more languages (TypeScript, Rust, Go)
-- [ ] Improve UI with Tailwind CSS
-- [ ] Add copy button for fixed code
-
----
-
-## 👨‍💻 Author
-
-**Pranit** — [@jonsnow273](https://github.com/jonsnow273)
 
 ---
 
 ## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
+MIT License.
