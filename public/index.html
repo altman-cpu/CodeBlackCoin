@@ -3,7 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Code Reviewer</title>
+    <title>OmniStream Connector | Marketplace to OBS & Stream Alert Bridge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #0d0f17;
+        color: #f1f5f9;
+        -webkit-font-smoothing: antialiased;
+      }
+      /* When running in OBS Browser Source mode, the background MUST be transparent */
+      body.obs-mode {
+        background-color: transparent !important;
+        background: transparent !important;
+        overflow: hidden;
+      }
+      /* Custom scrollbars */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #111422;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #2a314b;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #3d4668;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

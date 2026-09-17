@@ -1,22 +1,22 @@
-import React, { useState } from "react";
-import CodeInput from "./components/CodeInput";
-import ReviewOutput from "./components/ReviewOutput";
+import React, { useState, useEffect } from 'react';
+import Dashboard from './components/Dashboard';
+import OBSOverlay from './components/OBSOverlay';
 
-const App = () => {
-  const [review, setReview] = useState("");
+export default function App() {
+  const [isObsOverlay, setIsObsOverlay] = useState(false);
 
-  return (
-    <div style={{
-      display: "flex",
-      height: "100vh",
-      backgroundColor: "#1e1e1e",
-      color: "white",
-      fontFamily: "monospace"
-    }}>
-      <CodeInput onReviewComplete={(result) => setReview(result)} />
-      <ReviewOutput review={review} />
-    </div>
-  );
-};
+  useEffect(() => {
+    const path = window.location.pathname;
+    const search = window.location.search;
+    if (path.includes('obs-overlay') || search.includes('overlay=true')) {
+      setIsObsOverlay(true);
+      document.body.classList.add('obs-mode');
+    }
+  }, []);
 
-export default App;
+  if (isObsOverlay) {
+    return <OBSOverlay isPreview={false} />;
+  }
+
+  return <Dashboard />;
+}
