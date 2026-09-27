@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Node / Vite (BLACKVAULT)
+node_modules/
+.vite/
+coverage/
+*.local
+.DS_Store
