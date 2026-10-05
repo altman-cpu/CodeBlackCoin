@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# The Python template above ignores any directory named lib/; keep the
+# static app's client-side library folder tracked.
+!dash-wash-club/public/lib/
+!dash-wash-club/public/lib/**

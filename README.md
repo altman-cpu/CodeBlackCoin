@@ -3,6 +3,8 @@
 A full-stack web application that uses **Groq AI (Llama 3.3 70b)** to automatically review, debug, and fix your code.
 Simply paste your code, select a programming language, and receive instant feedback including bug detection, explanations, and a fully corrected version of your code.
 
+> **Also in this repository:** [`dash-wash-club/`](dash-wash-club/README.md) — a DASH Car Wash Elite membership console: memberships, wash logging and scannable Code 39 membership cards. Run it with `node dash-wash-club/server.mjs`.
+
 ---
 
 ## ✨ Features
