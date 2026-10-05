@@ -1,9 +1,9 @@
 /**
  * App shell, hash routing and action wiring for the DASH Wash Club console.
  */
-import { createStore } from "./lib/store.js";
-import { searchMembers, membershipCode } from "./lib/format.js";
-import { renderDashboard, renderMembers, renderMemberDetail, renderMemberForm, el } from "./views.js";
+import { createStore, PRIMARY_MEMBERSHIP } from "./lib/store.js";
+import { searchMembers, membershipCode, formatPhone } from "./lib/format.js";
+import { renderDashboard, renderMembers, renderMemberDetail, renderMemberForm, element } from "./views.js";
 
 const store = createStore(window.localStorage);
 
@@ -42,12 +42,12 @@ const go = (hash) => {
 window.addEventListener("hashchange", applyRoute);
 
 /* ------------------------------------------------------------------ *
- * Toast
+ * Messages shown in the bottom-right corner
  * ------------------------------------------------------------------ */
 
 let toastTimer = null;
 
-function toast(message, tone = "info") {
+function toast(message, tone = "note") {
   const node = shell.toast;
   node.textContent = message;
   node.className = `toast show ${tone}`;
@@ -81,7 +81,7 @@ const actions = {
   logWash: (id) => {
     const result = store.logWash(id);
     if (!result.ok) return toast("Could not log that wash.", "error");
-    toast(`Wash logged for ${result.member.name} — ${result.member.washes.length} on record.`, "success");
+    toast(`Wash logged for ${result.member.name} — ${result.member.washes.length} washes on record.`, "success");
     render();
   },
   undoWash: (id, iso) => {
@@ -104,11 +104,11 @@ const actions = {
     go("/members");
   },
   reset: () => {
-    if (!window.confirm("Restore the sample data? Any members you added will be lost.")) return;
+    if (!window.confirm("Restore the starting list? Any memberships you added will be lost.")) return;
     store.reset();
     shell.search.value = "";
     state.query = "";
-    toast("Sample data restored.");
+    toast("Original memberships restored.");
     render();
   },
   create: (payload) => {
@@ -132,11 +132,11 @@ const actions = {
  * ------------------------------------------------------------------ */
 
 function buildShell() {
-  const search = el("input", {
+  const search = element("input", {
     class: "input search",
     type: "search",
-    placeholder: "Search name, code or phone…",
-    "aria-label": "Search members",
+    placeholder: "Search by name, membership code or phone number…",
+    "aria-label": "Search memberships",
     onInput: (event) => actions.setQuery(event.target.value),
     onKeydown: (event) => {
       if (event.key === "Escape") actions.clearQuery();
@@ -144,36 +144,40 @@ function buildShell() {
   });
 
   const navButtons = [
-    { label: "Dashboard", hash: "/", view: "dashboard" },
-    { label: "Members", hash: "/members", view: "members" },
+    { label: "My dashboard", hash: "/", view: "dashboard" },
+    { label: "Member directory", hash: "/members", view: "members" },
   ].map((entry) =>
-    el("a", { class: "nav-link", href: `#${entry.hash}`, dataset: { nav: entry.view }, text: entry.label }),
+    element("a", { class: "nav-link", href: `#${entry.hash}`, dataset: { nav: entry.view }, text: entry.label }),
   );
 
-  const toastNode = el("div", { class: "toast", role: "status", "aria-live": "polite" });
+  const toastNode = element("div", { class: "toast", role: "status", "aria-live": "polite" });
 
-  const root = el(
+  const root = element(
     "div",
     { class: "app" },
-    el(
+    element(
       "header",
       { class: "topbar" },
-      el(
+      element(
         "div",
         { class: "brand-block" },
-        el("span", { class: "logo", text: "DASH" }),
-        el(
+        element("span", { class: "logo", text: "DASH" }),
+        element(
           "div",
           {},
-          el("h1", { class: "brand-title", text: "Wash Club" }),
-          el("span", { class: "brand-sub", text: "Elite membership console" }),
+          element("h1", { class: "brand-title", text: "Wash Club" }),
+          element("span", { class: "brand-sub", text: `Membership ${membershipCode(PRIMARY_MEMBERSHIP)} · ${formatPhone(PRIMARY_MEMBERSHIP.phone)}` }),
         ),
       ),
-      el("nav", { class: "nav" }, navButtons),
-      el("div", { class: "topbar-tools" }, search, el("button", { class: "btn ghost small", type: "button", onClick: actions.reset }, "Reset data")),
+      element("nav", { class: "nav" }, navButtons),
+      element("div", { class: "topbar-tools" }, search, element("button", { class: "button ghost small", type: "button", onClick: actions.reset }, "Reset data")),
     ),
-    el("main", { class: "main", id: "main" }),
-    el("footer", { class: "footer" }, el("span", { text: "DASH Wash Club · Code 39 cards · data stays in this browser" })),
+    element("main", { class: "main", id: "main" }),
+    element(
+        "footer",
+        { class: "footer" },
+        element("span", { text: `DASH Wash Club · membership ${membershipCode(PRIMARY_MEMBERSHIP)} · everything stays in this browser` }),
+      ),
     toastNode,
   );
 
@@ -188,7 +192,7 @@ const shell = buildShell();
 
 function currentView() {
   const members = store.all();
-  const ctx = {
+  const context = {
     members,
     visibleMembers: searchMembers(members, state.query),
     state,
@@ -196,10 +200,10 @@ function currentView() {
     now: new Date(),
   };
 
-  if (state.view === "form") return renderMemberForm(ctx, state.editingId);
-  if (state.view === "member") return renderMemberDetail(ctx, state.selectedId);
-  if (state.view === "members") return renderMembers(ctx);
-  return renderDashboard(ctx);
+  if (state.view === "form") return renderMemberForm(context, state.editingId);
+  if (state.view === "member") return renderMemberDetail(context, state.selectedId);
+  if (state.view === "members") return renderMembers(context);
+  return renderDashboard(context);
 }
 
 function render() {
@@ -224,5 +228,5 @@ applyRoute();
 
 // Surface a small hint in the console for anyone poking around the data model.
 console.info(
-  "DASH Wash Club ready. Member codes look like 906-S12; search, log washes, print cards. Data lives in localStorage.",
+  "DASH Wash Club ready. Your membership code is 906-S12 — log washes, print the card, or add members. Everything is stored in this browser.",
 );

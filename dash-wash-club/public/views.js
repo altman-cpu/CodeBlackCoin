@@ -1,9 +1,10 @@
 /**
- * DOM rendering for the DASH Wash Club console.
+ * Browser rendering for the DASH Wash Club console.
  * Every view returns a detached element; app.js owns the shell and routing.
  */
 import {
   PLANS,
+  weekStart,
   membershipCode,
   barcodeText,
   formatPhone,
@@ -11,7 +12,6 @@ import {
   relativeDay,
   planName,
   planPrice,
-  initials,
   weekBuckets,
   STATUSES,
 } from "./lib/format.js";
@@ -19,10 +19,10 @@ import { memberStats, clubStats } from "./lib/store.js";
 import { code39Svg } from "./lib/code39.js";
 
 /* ------------------------------------------------------------------ *
- * Small DOM helpers
+ * Small element helpers
  * ------------------------------------------------------------------ */
 
-export function el(tag, props = {}, ...children) {
+export function element(tag, props = {}, ...children) {
   const node = document.createElement(tag);
   for (const [key, value] of Object.entries(props)) {
     if (value === null || value === undefined || value === false) continue;
@@ -53,31 +53,35 @@ function avatarColor(seed) {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
+/* A colour-coded water droplet stands in for each member, so no name is
+   shortened to initials anywhere in the interface. */
+const DROPLET =
+  '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+  '<path fill="currentColor" d="M12 2.4c3.3 4.2 6.6 7.9 6.6 11.5a6.6 6.6 0 1 1-13.2 0C5.4 10.3 8.7 6.6 12 2.4Z"/>' +
+  "</svg>";
+
 function avatar(member, size = "") {
-  return el(
-    "span",
-    {
-      class: `avatar ${size}`.trim(),
-      style: { backgroundColor: avatarColor(member?.id ?? member?.name) },
-      "aria-hidden": "true",
-    },
-    initials(member?.name),
-  );
+  return element("span", {
+    class: `avatar ${size}`.trim(),
+    style: { backgroundColor: avatarColor(member?.id ?? member?.name) },
+    html: DROPLET,
+    "aria-hidden": "true",
+  });
 }
 
 function statusChip(status) {
-  return el("span", { class: `chip chip-${status}` }, status);
+  return element("span", { class: `chip chip-${status}` }, status);
 }
 
 function planChip(member) {
-  return el("span", { class: `chip plan-${member.plan}` }, `${planName(member)} · ${planPrice(member)}`);
+  return element("span", { class: `chip plan-${member.plan}` }, `${planName(member)} · ${planPrice(member)}`);
 }
 
 function sectionCard(title, subtitle, ...children) {
-  return el(
+  return element(
     "section",
     { class: "card" },
-    el("header", { class: "card-head" }, el("h2", { text: title }), subtitle ? el("p", { class: "muted", text: subtitle }) : null),
+    element("header", { class: "card-head" }, element("h2", { text: title }), subtitle ? element("p", { class: "muted", text: subtitle }) : null),
     ...children,
   );
 }
@@ -86,28 +90,28 @@ function sectionCard(title, subtitle, ...children) {
  * Dashboard
  * ------------------------------------------------------------------ */
 
-export function renderDashboard(ctx) {
-  const { members, actions, now } = ctx;
+export function renderDashboard(context) {
+  const { members, actions, now } = context;
   const stats = clubStats(members, now);
   const primary = members.find((member) => member.id === "mbr-906-s12") ?? null;
 
-  const kpis = [
-    { label: "Members", value: stats.members, hint: `${stats.active} active` },
+  const statistics = [
+    { label: "Memberships", value: stats.members, hint: `${stats.active} active` },
     { label: "Washes this month", value: stats.washesThisMonth, hint: "all sites" },
-    { label: "Avg washes / member", value: stats.avgPerMember.toFixed(1), hint: "this month" },
-    { label: "Washes logged", value: stats.totalWashes, hint: "all time" },
+    { label: "Average washes per member", value: stats.avgPerMember.toFixed(1), hint: "this month" },
+    { label: "Washes on record", value: stats.totalWashes, hint: "all time" },
   ];
 
-  const kpiRow = el(
+  const statisticsRow = element(
     "div",
-    { class: "kpi-row" },
-    kpis.map((kpi) =>
-      el(
+    { class: "stats-row" },
+    statistics.map((statistic) =>
+      element(
         "div",
-        { class: "kpi" },
-        el("span", { class: "kpi-label", text: kpi.label }),
-        el("strong", { class: "kpi-value", text: String(kpi.value) }),
-        el("span", { class: "kpi-hint", text: kpi.hint }),
+        { class: "stat" },
+        element("span", { class: "stat-label", text: statistic.label }),
+        element("strong", { class: "stat-value", text: String(statistic.value) }),
+        element("span", { class: "stat-hint", text: statistic.hint }),
       ),
     ),
   );
@@ -119,25 +123,25 @@ export function renderDashboard(ctx) {
     .slice(0, 6);
 
   const recentList = recent.length
-    ? el(
+    ? element(
         "ul",
         { class: "feed" },
         recent.map(({ member, iso }) =>
-          el(
+          element(
             "li",
             {},
-            avatar(member, "sm"),
-            el(
+            avatar(member, "small"),
+            element(
               "div",
               { class: "feed-body" },
-              el("button", { class: "link", type: "button", onClick: () => actions.openMember(member.id) }, member.name),
-              el("span", { class: "muted small", text: `${membershipCode(member)} · ${planName(member)}` }),
+              element("button", { class: "link", type: "button", onClick: () => actions.openMember(member.id) }, member.name),
+              element("span", { class: "muted small", text: `${membershipCode(member)} · ${planName(member)}` }),
             ),
-            el("time", { class: "muted small", datetime: iso, text: relativeDay(iso, now) }),
+            element("time", { class: "muted small", datetime: iso, text: relativeDay(iso, now) }),
           ),
         ),
       )
-    : el("p", { class: "muted", text: "No washes logged yet — open a member and record the first one." });
+    : element("p", { class: "muted", text: "No washes logged yet — open a member and record the first one." });
 
   /* washes per week */
   const weeks = 8;
@@ -147,17 +151,23 @@ export function renderDashboard(ctx) {
     now,
   );
   const peak = Math.max(1, ...buckets);
-  const chart = el(
+  const firstWeek = weekStart(now);
+  firstWeek.setDate(firstWeek.getDate() - (weeks - 1) * 7);
+  const chart = element(
     "div",
-    { class: "chart", role: "img", "aria-label": `Washes per week for the last ${weeks} weeks: ${buckets.join(", ")}` },
+    { class: "chart", role: "img", "aria-label": `Washes per week for the last ${weeks} weeks: ${buckets.join(", ")}. Each column is one week starting Monday.` },
     buckets.map((count, index) => {
+      const start = new Date(firstWeek);
+      start.setDate(start.getDate() + index * 7);
       const weeksAgo = weeks - 1 - index;
-      return el(
+      const label = weeksAgo === 0 ? "this week" : `${formatDateTime(start, { month: "numeric", day: "numeric" })}`;
+      const spoken = weeksAgo === 0 ? "the current week" : `the week of ${formatDateTime(start)}`;
+      return element(
         "div",
-        { class: "chart-col" },
-        el("span", { class: "chart-count", text: count ? String(count) : "" }),
-        el("div", { class: "chart-track" }, el("div", { class: "chart-bar", style: { height: `${Math.round((count / peak) * 100)}%` } })),
-        el("span", { class: "chart-label", text: weeksAgo === 0 ? "now" : `-${weeksAgo}w` }),
+        { class: "chart-column", title: `${count} wash${count === 1 ? "" : "es"} in ${spoken}` },
+        element("span", { class: "chart-count", text: count ? String(count) : "" }),
+        element("div", { class: "chart-track" }, element("div", { class: "chart-bar", style: { height: `${Math.round((count / peak) * 100)}%` } })),
+        element("span", { class: "chart-label", text: label }),
       );
     }),
   );
@@ -167,118 +177,121 @@ export function renderDashboard(ctx) {
     .map((member) => ({ member, stats: memberStats(member, now) }))
     .sort((a, b) => b.stats.thisMonth - a.stats.thisMonth || a.member.name.localeCompare(b.member.name));
   const loadMax = Math.max(1, ...ranked.map((entry) => entry.stats.thisMonth));
-  const loadList = el(
+  const loadList = element(
     "ul",
     { class: "load" },
     ranked.map(({ member, stats: memberStat }) =>
-      el(
+      element(
         "li",
         {},
-        el("button", { class: "link load-name", type: "button", onClick: () => actions.openMember(member.id) }, member.name),
-        el("div", { class: "load-track" }, el("div", { class: "load-bar", style: { width: `${(memberStat.thisMonth / loadMax) * 100}%` } })),
-        el("span", { class: "muted small load-count", text: `${memberStat.thisMonth} this month` }),
+        element("button", { class: "link load-name", type: "button", onClick: () => actions.openMember(member.id) }, member.name),
+        element("div", { class: "load-track" }, element("div", { class: "load-bar", style: { width: `${(memberStat.thisMonth / loadMax) * 100}%` } })),
+        element("span", { class: "muted small load-count", text: `${memberStat.thisMonth} this month` }),
       ),
     ),
   );
 
-  return el(
+  return element(
     "div",
     { class: "view" },
-    el(
+    element(
       "div",
       { class: "view-head" },
-      el("div", {}, el("h1", { text: "Club overview" }), el(
+      element("div", {}, element("h1", { text: "Your club at a glance" }), element(
         "p",
         { class: "muted" },
-        "Memberships, wash activity and member load across the DASH network.",
+        "Your Elite membership, wash activity and member load across every DASH site.",
       )),
-      el("button", { class: "btn primary", type: "button", onClick: () => actions.newMember() }, "＋ New member"),
+      element("button", { class: "button primary", type: "button", onClick: () => actions.newMember() }, "＋ Add membership"),
     ),
-    primary ? heroCard(primary, ctx) : null,
-    kpiRow,
-    el("div", { class: "grid two" }, sectionCard("Washes per week", "Last 8 weeks, Monday-based buckets", chart), sectionCard("Recent activity", "Latest washes across the club", recentList)),
-    el("div", { class: "grid two" }, sectionCard("Wash load by member", "Calendar month to date", loadList), sectionCard("Plan mix", "Active memberships by plan", planMix(members))),
+    primary ? heroCard(primary, context) : null,
+    statisticsRow,
+    element("div", { class: "grid two" }, sectionCard("Washes per week", "Last 8 weeks, weeks start on Monday", chart), sectionCard("Recent activity", "Most recent washes across the club", recentList)),
+    element("div", { class: "grid two" }, sectionCard("Wash load by member", "Current calendar month", loadList), sectionCard("Membership plans", "How your members spread across the three plans", planMix(members))),
   );
 }
 
-function heroCard(member, ctx) {
-  const stats = memberStats(member, ctx.now);
-  return el(
+function heroCard(member, context) {
+  const stats = memberStats(member, context.now);
+  return element(
     "section",
     { class: "hero" },
-    el(
+    element(
       "div",
       { class: "hero-body" },
-      el("span", { class: "eyebrow", text: "Membership on file" }),
-      el("h2", {}, member.name),
-      el(
+      element("span", { class: "eyebrow", text: "Your membership on file" }),
+      element("h2", {}, member.name),
+      element(
         "div",
         { class: "hero-facts" },
-        fact("Phone", formatPhone(member.phone)),
-        fact("Site", member.siteCode),
-        fact("Member code", member.memberCode),
-        fact("Plan", `${planName(member)} · ${planPrice(member)}`),
+        fact("Phone number", formatPhone(member.phone)),
+        fact("Site code", member.siteCode),
+        fact("Membership code", member.memberCode),
         fact("Full code", membershipCode(member)),
+        fact("Plan", `${planName(member)} · ${planPrice(member)}`),
+        fact("Member since", formatDateTime(member.joinedAt)),
+        fact("Vehicle", member.vehicle || "Not recorded"),
+        fact("Favourite location", member.preferredLocation || "Not recorded"),
       ),
-      el(
+      element(
         "div",
         { class: "hero-actions" },
-        el("button", { class: "btn primary", type: "button", onClick: () => ctx.actions.logWash(member.id) }, "✓ Log a wash"),
-        el("button", { class: "btn", type: "button", onClick: () => ctx.actions.openMember(member.id) }, "Open card"),
+        element("button", { class: "button primary", type: "button", onClick: () => context.actions.logWash(member.id) }, "✓ Log a wash"),
+        element("button", { class: "button", type: "button", onClick: () => context.actions.openMember(member.id) }, "Open membership"),
       ),
-      el(
+      element(
         "p",
         { class: "muted small" },
-        `${stats.total} washes on record · ${stats.thisMonth} this month · last ${relativeDay(stats.lastWash, ctx.now) || "—"}`,
+        `${stats.total} washes on record · ${stats.thisMonth} this month · last ${relativeDay(stats.lastWash, context.now) || "not yet"}`,
       ),
     ),
-    el("div", { class: "hero-qr", html: code39Svg(barcodeText(member), { height: 54, moduleWidth: 1.5 }) }),
+    element("div", { class: "hero-barcode", html: code39Svg(barcodeText(member), { height: 54, moduleWidth: 1.5 }) }),
   );
 }
 
 function fact(label, value) {
-  return el("div", { class: "fact" }, el("span", { class: "fact-label", text: label }), el("strong", { text: String(value ?? "—") }));
+  return element("div", { class: "fact" }, element("span", { class: "fact-label", text: label }), element("strong", { text: String(value ?? "—") }));
 }
 
 function planMix(members) {
   const rows = PLANS.map((plan) => {
     const count = members.filter((member) => member.plan === plan.id).length;
     const share = members.length ? Math.round((count / members.length) * 100) : 0;
-    return el(
+    return element(
       "li",
       {},
-      el("span", { class: `chip plan-${plan.id}`, text: plan.name }),
-      el("div", { class: "load-track" }, el("div", { class: "load-bar", style: { width: `${share}%` } })),
-      el("span", { class: "muted small", text: `${count} · ${share}%` }),
+      element("span", { class: `chip plan-${plan.id}`, text: plan.name }),
+      element("div", { class: "load-track" }, element("div", { class: "load-bar", style: { width: `${share}%` } })),
+      element("span", { class: "muted small", text: `${count} · ${share}%` }),
     );
   });
-  return el("ul", { class: "load" }, rows);
+  return element("ul", { class: "load" }, rows);
 }
 
 /* ------------------------------------------------------------------ *
  * Member list
  * ------------------------------------------------------------------ */
 
-export function renderMembers(ctx) {
-  const { visibleMembers, state, actions, now } = ctx;
+export function renderMembers(context) {
+  const { visibleMembers, state, actions, now } = context;
 
   if (!visibleMembers.length) {
-    return el(
+    return element(
       "div",
       { class: "view" },
-      el("div", { class: "view-head" }, el("h1", { text: "Members" }), el("button", { class: "btn primary", type: "button", onClick: () => actions.newMember() }, "＋ New member")),
-      el(
+      element("div", { class: "view-head" }, element("h1", { text: "Member directory" }), element("button", { class: "button primary", type: "button", onClick: () => actions.newMember() }, "＋ Add membership")),
+      element(
         "div",
         { class: "empty" },
-        el("p", { text: state.query ? `No members match “${state.query}”.` : "No memberships yet." }),
-        el("button", { class: "btn", type: "button", onClick: () => actions.clearQuery() }, "Clear search"),
+        element("p", { text: state.query ? `No memberships match “${state.query}”.` : "No memberships yet." }),
+        element("button", { class: "button", type: "button", onClick: () => actions.clearQuery() }, "Clear search"),
       ),
     );
   }
 
   const rows = visibleMembers.map((member) => {
     const stats = memberStats(member, now);
-    return el(
+    return element(
       "tr",
       {
         class: "row",
@@ -291,66 +304,66 @@ export function renderMembers(ctx) {
           }
         },
       },
-      el(
+      element(
         "td",
         {},
-        el("div", { class: "cell-member" }, avatar(member), el("div", {}, el("strong", { text: member.name }), el("span", { class: "muted small", text: `joined ${formatDateTime(member.joinedAt)}` }))),
+        element("div", { class: "cell-member" }, avatar(member), element("div", {}, element("strong", { text: member.name }), element("span", { class: "muted small", text: `member since ${formatDateTime(member.joinedAt)}` }))),
       ),
-      el("td", {}, el("span", { class: "mono", text: membershipCode(member) })),
-      el("td", {}, planChip(member)),
-      el("td", {}, statusChip(member.status)),
-      el("td", { class: "num" }, String(stats.thisMonth)),
-      el("td", { class: "muted" }, relativeDay(stats.lastWash, now) || "never"),
-      el(
+      element("td", {}, element("span", { class: "monospace", text: membershipCode(member) })),
+      element("td", {}, planChip(member)),
+      element("td", {}, statusChip(member.status)),
+      element("td", { class: "number" }, String(stats.thisMonth)),
+      element("td", { class: "muted" }, relativeDay(stats.lastWash, now) || "never"),
+      element(
         "td",
         { class: "actions" },
-        el(
+        element(
           "button",
           {
-            class: "btn tiny",
+            class: "button tiny",
             type: "button",
             onClick: (event) => {
               event.stopPropagation();
               actions.logWash(member.id);
             },
           },
-          "Log wash",
+          "Log a wash",
         ),
       ),
     );
   });
 
-  return el(
+  return element(
     "div",
     { class: "view" },
-    el(
+    element(
       "div",
       { class: "view-head" },
-      el("div", {}, el("h1", { text: "Members" }), el("p", { class: "muted", text: `${visibleMembers.length} shown${state.query ? ` · filtered by “${state.query}”` : ""}` })),
-      el("button", { class: "btn primary", type: "button", onClick: () => actions.newMember() }, "＋ New member"),
+      element("div", {}, element("h1", { text: "Member directory" }), element("p", { class: "muted", text: `${visibleMembers.length} memberships shown${state.query ? ` · filtered by “${state.query}”` : ""}` })),
+      element("button", { class: "button primary", type: "button", onClick: () => actions.newMember() }, "＋ Add membership"),
     ),
-    el(
+    element(
       "div",
       { class: "table-wrap" },
-      el(
+      element(
         "table",
         { class: "table" },
-        el(
+        element(
           "thead",
           {},
-          el(
+          element(
             "tr",
             {},
-            el("th", { text: "Member" }),
-            el("th", { text: "Code" }),
-            el("th", { text: "Plan" }),
-            el("th", { text: "Status" }),
-            el("th", { class: "num", text: "Washes / mo" }),
-            el("th", { text: "Last wash" }),
-            el("th", { text: "" }),
+            element("th", { text: "Member name" }),
+            element("th", { text: "Membership code" }),
+            element("th", { text: "Plan" }),
+            element("th", { text: "Status" }),
+            element("th", { class: "number", text: "Washes this month" }),
+            element("th", { text: "Last wash" }),
+            element("th", { text: "" }),
           ),
         ),
-        el("tbody", {}, rows),
+        element("tbody", {}, rows),
       ),
     ),
   );
@@ -360,125 +373,135 @@ export function renderMembers(ctx) {
  * Member detail
  * ------------------------------------------------------------------ */
 
-export function renderMemberDetail(ctx, id) {
-  const member = ctx.members.find((entry) => entry.id === id);
+export function renderMemberDetail(context, id) {
+  const member = context.members.find((entry) => entry.id === id);
   if (!member) {
-    return el(
+    return element(
       "div",
       { class: "view" },
-      el("div", { class: "empty" }, el("p", { text: "That membership no longer exists." }), el("button", { class: "btn", type: "button", onClick: () => ctx.actions.setView("members") }, "Back to members")),
+      element("div", { class: "empty" }, element("p", { text: "That membership no longer exists." }), element("button", { class: "button", type: "button", onClick: () => context.actions.setView("members") }, "Back to members")),
     );
   }
 
-  const stats = memberStats(member, ctx.now);
+  const stats = memberStats(member, context.now);
   const code = barcodeText(member);
 
-  const details = el(
+  const details = element(
     "dl",
     { class: "details" },
-    detailRow("Phone", formatPhone(member.phone)),
-    detailRow("Site", member.siteCode),
-    detailRow("Member code", member.memberCode),
+    detailRow("Phone number", formatPhone(member.phone)),
+    detailRow("Site code", member.siteCode),
+    detailRow("Membership code", member.memberCode),
+    detailRow("Full code", membershipCode(member)),
     detailRow("Plan", `${planName(member)} · ${planPrice(member)}`),
+    detailRow("Vehicle", member.vehicle || "Not recorded"),
+    detailRow("Favourite location", member.preferredLocation || "Not recorded"),
     detailRow("Status", statusChip(member.status)),
-    detailRow("Joined", formatDateTime(member.joinedAt)),
+    detailRow("Member since", formatDateTime(member.joinedAt)),
     detailRow("Washes", `${stats.total} total · ${stats.thisMonth} this month`),
-    detailRow("Last wash", stats.lastWash ? `${formatDateTime(stats.lastWash)} (${relativeDay(stats.lastWash, ctx.now)})` : "never"),
+    detailRow("Last wash", stats.lastWash ? `${formatDateTime(stats.lastWash)} (${relativeDay(stats.lastWash, context.now)})` : "never"),
     detailRow("Notes", member.notes || "—"),
   );
 
   const history = (member.washes ?? []).length
-    ? el(
+    ? element(
         "ul",
         { class: "timeline" },
         (member.washes ?? []).map((iso) =>
-          el(
+          element(
             "li",
             {},
-            el("span", { class: "dot" }),
-            el("div", {}, el("strong", { text: formatDateTime(iso, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) }), el("span", { class: "muted small", text: relativeDay(iso, ctx.now) })),
-            el("button", { class: "btn tiny ghost", type: "button", onClick: () => ctx.actions.undoWash(member.id, iso) }, "Undo"),
+            element("span", { class: "dot" }),
+            element("div", {}, element("strong", { text: formatDateTime(iso, { month: "long", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }) }), element("span", { class: "muted small", text: relativeDay(iso, context.now) })),
+            element("button", { class: "button tiny ghost", type: "button", onClick: () => context.actions.undoWash(member.id, iso) }, "Undo"),
           ),
         ),
       )
-    : el("p", { class: "muted", text: "No washes recorded for this member yet." });
+    : element("p", { class: "muted", text: "No washes recorded for this member yet." });
 
   const statusButtons = STATUSES.filter((status) => status !== member.status).map((status) =>
-    el(
+    element(
       "button",
-      { class: "btn tiny", type: "button", onClick: () => ctx.actions.setStatus(member.id, status) },
+      { class: "button tiny", type: "button", onClick: () => context.actions.setStatus(member.id, status) },
       status === "active" ? "Reactivate" : status === "paused" ? "Pause" : "Cancel membership",
     ),
   );
 
-  return el(
+  return element(
     "div",
     { class: "view" },
-    el(
+    element(
       "div",
       { class: "view-head" },
-      el(
+      element(
         "div",
         { class: "head-stack" },
-        el("button", { class: "btn tiny ghost", type: "button", onClick: () => ctx.actions.setView("members") }, "← Members"),
-        el("h1", {}, member.name, " ", statusChip(member.status)),
+        element("button", { class: "button tiny ghost", type: "button", onClick: () => context.actions.setView("members") }, "← Member directory"),
+        element("h1", {}, member.name, " ", statusChip(member.status)),
       ),
-      el(
+      element(
         "div",
-        { class: "btn-row" },
-        el("button", { class: "btn primary", type: "button", onClick: () => ctx.actions.logWash(member.id) }, "✓ Log a wash"),
-        el("button", { class: "btn", type: "button", onClick: () => ctx.actions.openForm(member.id) }, "Edit"),
-        el("button", { class: "btn", type: "button", onClick: () => window.print() }, "Print card"),
+        { class: "button-row" },
+        element("button", { class: "button primary", type: "button", onClick: () => context.actions.logWash(member.id) }, "✓ Log a wash"),
+        element("button", { class: "button", type: "button", onClick: () => context.actions.openForm(member.id) }, "Edit"),
+        element("button", { class: "button", type: "button", onClick: () => window.print() }, "Print card"),
       ),
     ),
-    el(
+    element(
       "div",
       { class: "grid detail" },
-      el(
+      element(
         "section",
         { class: "card card-tight" },
-        el(
+        element(
           "div",
           { class: "membership-card" },
-          el(
+          element(
             "div",
             { class: "membership-top" },
-            el("span", { class: "brand", text: "DASH" }),
-            el("span", { class: "brand-sub", text: "CAR WASH · UNLIMITED" }),
+            element("span", { class: "brand", text: "DASH" }),
+            element("span", { class: "brand-sub", text: "CAR WASH · UNLIMITED" }),
           ),
-          el(
+          element(
             "div",
             { class: "membership-mid" },
-            el("div", {}, el("span", { class: "card-label", text: "Member" }), el("strong", { class: "card-name", text: member.name })),
-            el("div", { class: "card-plan" }, el("span", { class: "chip plan-" + member.plan }, planName(member).toUpperCase())),
+            element(
+              "div",
+              {},
+              element("span", { class: "card-label", text: "Member" }),
+              element("strong", { class: "card-name", text: member.name }),
+              member.vehicle ? element("span", { class: "card-vehicle", text: member.vehicle }) : null,
+            ),
+            element("div", { class: "card-plan" }, element("span", { class: "chip plan-" + member.plan }, planName(member).toUpperCase())),
           ),
-          el("div", { class: "card-barcode", html: code39Svg(code, { height: 58, moduleWidth: 1.7 }) || "" }),
-          el(
+          element("div", { class: "card-barcode", html: code39Svg(code, { height: 58, moduleWidth: 1.7 }) || "" }),
+          element(
             "div",
             { class: "membership-bottom" },
-            el("span", { class: "mono", text: membershipCode(member) }),
-            el("span", { class: "mono", text: formatPhone(member.phone) }),
-            el("span", { class: "mono", text: member.status.toUpperCase() }),
+            element("span", { class: "monospace", text: membershipCode(member) }),
+            element("span", { class: "monospace", text: formatPhone(member.phone) }),
+            element("span", { class: "monospace", text: `MEMBER SINCE ${formatDateTime(member.joinedAt, { month: "long", year: "numeric" }).toUpperCase()}` }),
+            element("span", { class: "monospace", text: member.status.toUpperCase() }),
           ),
         ),
-        el("p", { class: "muted small center", text: "Code 39 · scan at the gate, or read the code to the attendant." }),
+        element("p", { class: "muted small center", text: `Code 39 barcode · scan at the gate or read ${membershipCode(member)} to the attendant.` }),
       ),
-      sectionCard("Membership details", "Site 906 · entered from the DASH card", details, el("div", { class: "btn-row" }, statusButtons, el("button", { class: "btn tiny danger", type: "button", onClick: () => ctx.actions.remove(member.id) }, "Delete"))),
+      sectionCard("Membership details", `Site code ${member.siteCode} · recorded from your DASH membership`, details, element("div", { class: "button-row" }, statusButtons, element("button", { class: "button tiny danger", type: "button", onClick: () => context.actions.remove(member.id) }, "Delete"))),
     ),
     sectionCard("Wash history", `${(member.washes ?? []).length} recorded visit${(member.washes ?? []).length === 1 ? "" : "s"}`, history),
   );
 }
 
 function detailRow(label, value) {
-  return el("div", { class: "detail-row" }, el("dt", { text: label }), el("dd", {}, value));
+  return element("div", { class: "detail-row" }, element("dt", { text: label }), element("dd", {}, value));
 }
 
 /* ------------------------------------------------------------------ *
  * Member form (create + edit)
  * ------------------------------------------------------------------ */
 
-export function renderMemberForm(ctx, id) {
-  const existing = id ? ctx.members.find((member) => member.id === id) : null;
+export function renderMemberForm(context, id) {
+  const existing = id ? context.members.find((member) => member.id === id) : null;
   const draft = {
     name: existing?.name ?? "",
     phone: existing ? formatPhone(existing.phone) : "",
@@ -487,27 +510,29 @@ export function renderMemberForm(ctx, id) {
     plan: existing?.plan ?? "elite",
     status: existing?.status ?? "active",
     notes: existing?.notes ?? "",
+    vehicle: existing?.vehicle ?? "",
+    preferredLocation: existing?.preferredLocation ?? "",
   };
 
   const fields = {};
   const errorNodes = {};
 
   const field = (name, label, input, hint) => {
-    const error = el("span", { class: "field-error" });
+    const error = element("span", { class: "field-error" });
     errorNodes[name] = error;
     input.setAttribute("data-key", name);
-    return el(
+    return element(
       "label",
       { class: "field" },
-      el("span", { class: "field-label", text: label }),
+      element("span", { class: "field-label", text: label }),
       input,
-      hint ? el("span", { class: "field-hint muted small", text: hint }) : null,
+      hint ? element("span", { class: "field-hint muted small", text: hint }) : null,
       error,
     );
   };
 
   function textInput(name, options = {}) {
-    const input = el("input", {
+    const input = element("input", {
       class: "input",
       type: options.type ?? "text",
       value: options.value ?? "",
@@ -524,7 +549,7 @@ export function renderMemberForm(ctx, id) {
   }
 
   function selectInput(name, options) {
-    const select = el(
+    const select = element(
       "select",
       {
         class: "input",
@@ -533,31 +558,31 @@ export function renderMemberForm(ctx, id) {
           errorNodes[name].textContent = "";
         },
       },
-      options.map((option) => el("option", { value: option.value, selected: option.value === (draft[name] ?? "") ? true : null }, option.label)),
+      options.map((option) => element("option", { value: option.value, selected: option.value === (draft[name] ?? "") ? true : null }, option.label)),
     );
     fields[name] = select.value;
     return select;
   }
 
-  const form = el(
+  const form = element(
     "form",
     {
       class: "form",
       onSubmit: (event) => {
         event.preventDefault();
         const payload = { ...draft, ...fields };
-        const result = existing ? ctx.actions.update(existing.id, payload) : ctx.actions.create(payload);
+        const result = existing ? context.actions.update(existing.id, payload) : context.actions.create(payload);
         if (result.ok) return;
         for (const [key, message] of Object.entries(result.errors)) {
           if (errorNodes[key]) errorNodes[key].textContent = message;
         }
       },
     },
-    el(
+    element(
       "div",
       { class: "grid two" },
       field("name", "Member name", textInput("name", { value: draft.name, placeholder: "Dash Car Wash" })),
-      field("phone", "Phone", textInput("phone", { value: draft.phone, placeholder: "(802) 428-9009", inputmode: "tel" }), "10 digits — used to spot duplicates."),
+      field("phone", "Phone number", textInput("phone", { value: draft.phone, placeholder: "(802) 428-9009", inputmode: "tel" }), "Ten digits — used to spot duplicate memberships."),
       field("siteCode", "Site code", textInput("siteCode", { value: draft.siteCode, placeholder: "906" })),
       field("memberCode", "Membership code", textInput("memberCode", { value: draft.memberCode, placeholder: "S12" }), "Letters, digits and - . / + % $"),
       field(
@@ -565,35 +590,37 @@ export function renderMemberForm(ctx, id) {
         "Plan",
         selectInput(
           "plan",
-          PLANS.map((plan) => ({ value: plan.id, label: `${plan.name} — $${plan.price.toFixed(2)}/mo` })),
+          PLANS.map((plan) => ({ value: plan.id, label: `${plan.name} — $${plan.price.toFixed(2)} per month` })),
         ),
       ),
       field(
         "status",
-        "Status",
+        "Membership status",
         selectInput(
           "status",
           STATUSES.map((status) => ({ value: status, label: status[0].toUpperCase() + status.slice(1) })),
         ),
       ),
+      field("vehicle", "Vehicle", textInput("vehicle", { value: draft.vehicle, placeholder: "2021 Toyota Camry — midnight black" }), "Optional — shown on the dashboard and card."),
+      field("preferredLocation", "Favourite DASH location", textInput("preferredLocation", { value: draft.preferredLocation, placeholder: "Craig Road, North Las Vegas" }), "Optional — where this member usually washes."),
     ),
-    field("notes", "Notes", textInput("notes", { value: draft.notes, placeholder: "Optional — vehicle, preferences, reminders." })),
-    el(
+    field("notes", "Notes", textInput("notes", { value: draft.notes, placeholder: "Optional — wash preferences, reminders, anything useful." })),
+    element(
       "div",
-      { class: "btn-row" },
-      el("button", { class: "btn primary", type: "submit" }, existing ? "Save changes" : "Create membership"),
-      el("button", { class: "btn ghost", type: "button", onClick: () => ctx.actions.cancelForm(existing?.id ?? null) }, "Cancel"),
+      { class: "button-row" },
+      element("button", { class: "button primary", type: "submit" }, existing ? "Save changes" : "Create membership"),
+      element("button", { class: "button ghost", type: "button", onClick: () => context.actions.cancelForm(existing?.id ?? null) }, "Cancel"),
     ),
   );
 
-  return el(
+  return element(
     "div",
     { class: "view narrow" },
-    el(
+    element(
       "div",
       { class: "view-head" },
-      el("div", {}, el("h1", { text: existing ? "Edit membership" : "New membership" }), el("p", { class: "muted", text: existing ? `Updating ${existing.name}` : "Register a DASH unlimited wash membership." })),
+      element("div", {}, element("h1", { text: existing ? "Edit membership" : "New membership" }), element("p", { class: "muted", text: existing ? `Updating ${existing.name}` : "Register a DASH unlimited wash membership." })),
     ),
-    el("section", { class: "card" }, form),
+    element("section", { class: "card" }, form),
   );
 }

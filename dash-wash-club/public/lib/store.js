@@ -1,6 +1,6 @@
 /**
  * Persistence + domain logic for the DASH Wash Club console.
- * DOM-free: the browser app and the Node test suite share it.
+ * It touches no browser document objects, so the web app and the Node test suite share it.
  */
 
 import { thisMonthCount, validateMember, membershipCode } from "./format.js";
@@ -19,7 +19,9 @@ export const PRIMARY_MEMBERSHIP = {
   memberCode: "S12",
   plan: "elite",
   status: "active",
-  notes: "Elite membership card entered on 2026-10-05 — site 906, code S12.",
+  notes: "Your Elite membership was entered on 5 October 2026 — site code 906, membership code S12.",
+  vehicle: "2021 Toyota Camry — midnight black",
+  preferredLocation: "Craig Road, North Las Vegas",
 };
 
 export function createSeed(now = new Date()) {
@@ -31,38 +33,44 @@ export function createSeed(now = new Date()) {
       washes: [daysAgo(21, now), daysAgo(12, now), daysAgo(5, now), daysAgo(2, now)],
     },
     {
-      id: "mbr-906-elt4412",
+      id: "mbr-906-4412",
       name: "Marcus Webb",
       phone: "7025550147",
       siteCode: "906",
-      memberCode: "ELT-4412",
+      memberCode: "4412",
       plan: "elite",
       status: "active",
       notes: "Prefers the tunnel on weekday mornings.",
+      vehicle: "2016 Ford F-150 — silver",
+      preferredLocation: "Craig Road, North Las Vegas",
       joinedAt: daysAgo(212, now),
       washes: [daysAgo(26, now), daysAgo(19, now), daysAgo(12, now), daysAgo(4, now), daysAgo(0, now)],
     },
     {
-      id: "mbr-812-shn2277",
+      id: "mbr-812-2277",
       name: "Priya Raman",
       phone: "7025550188",
       siteCode: "812",
-      memberCode: "SHN-2277",
+      memberCode: "2277",
       plan: "shine",
       status: "active",
       notes: "",
+      vehicle: "2022 Honda CR-V — grey",
+      preferredLocation: "Centennial Parkway, Las Vegas",
       joinedAt: daysAgo(140, now),
       washes: [daysAgo(45, now), daysAgo(31, now), daysAgo(17, now), daysAgo(9, now)],
     },
     {
-      id: "mbr-906-bth8891",
+      id: "mbr-906-8891",
       name: "Tomas Delgado",
       phone: "7025550163",
       siteCode: "906",
-      memberCode: "BTH-8891",
+      memberCode: "8891",
       plan: "bath",
       status: "paused",
       notes: "Paused for the season — resume in spring.",
+      vehicle: "2014 Chevrolet Silverado — blue",
+      preferredLocation: "Craig Road, North Las Vegas",
       joinedAt: daysAgo(305, now),
       washes: [daysAgo(120, now), daysAgo(96, now), daysAgo(71, now)],
     },

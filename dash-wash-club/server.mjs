@@ -5,7 +5,7 @@
  *
  * It only serves files from ./public, binds to 0.0.0.0 by default so the
  * sandbox preview can reach it, and sends no restrictive headers, so the
- * app can be embedded in a preview iframe.
+ * app can be embedded in a preview window.
  */
 import http from "node:http";
 import { createReadStream } from "node:fs";
@@ -66,12 +66,12 @@ const server = http.createServer(async (request, response) => {
       return;
     }
 
-    let info = await stat(filePath).catch(() => null);
-    if (info?.isDirectory()) {
+    let details = await stat(filePath).catch(() => null);
+    if (details?.isDirectory()) {
       filePath = path.join(filePath, "index.html");
-      info = await stat(filePath).catch(() => null);
+      details = await stat(filePath).catch(() => null);
     }
-    if (!info?.isFile()) {
+    if (!details?.isFile()) {
       status = 404;
       response.writeHead(status, { "content-type": "text/html; charset=utf-8" });
       response.end("<h1>404 — not found</h1><p><a href=\"/\">Back to DASH Wash Club</a></p>");
@@ -81,7 +81,7 @@ const server = http.createServer(async (request, response) => {
     const type = MIME[path.extname(filePath).toLowerCase()] ?? "application/octet-stream";
     response.writeHead(status, {
       "content-type": type,
-      "content-length": info.size,
+      "content-length": details.size,
       "cache-control": "no-cache",
     });
     if (request.method === "HEAD") {

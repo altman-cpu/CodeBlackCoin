@@ -1,5 +1,5 @@
 /**
- * DOM is not available in Node, so tests provide a tiny localStorage stand-in.
+ * Node has no browser document or localStorage, so these tests provide a tiny stand-in.
  * These tests exercise the same store the browser uses.
  */
 import test from "node:test";
@@ -35,6 +35,8 @@ test("seed ships the membership the console was built for", () => {
   assert.equal(membershipCode(primary), "906-S12");
   assert.equal(primary.plan, "elite");
   assert.equal(primary.status, "active");
+  assert.equal(primary.vehicle, "2021 Toyota Camry — midnight black");
+  assert.equal(primary.preferredLocation, "Craig Road, North Las Vegas");
 });
 
 test("add() persists a member and rejects duplicates by phone", () => {
@@ -58,6 +60,8 @@ test("validateMember flags missing fields and normalizes input", () => {
   assert.equal(good.ok, true);
   assert.equal(good.value.name, "dash car wash");
   assert.equal(good.value.plan, "elite");
+  assert.equal(good.value.vehicle, "", "vehicle is optional");
+  assert.equal(good.value.preferredLocation, "", "favourite location is optional");
 });
 
 test("logWash prepends a timestamp and undoWash removes only that entry", () => {
@@ -83,7 +87,7 @@ test("status changes and removal round-trip through storage", () => {
 
   reloaded.remove("mbr-906-s12");
   assert.equal(reloaded.find("mbr-906-s12"), null);
-  assert.ok(storage.getItem(STORAGE_KEY).includes("mbr-906-elt4412"));
+  assert.ok(storage.getItem(STORAGE_KEY).includes("mbr-906-4412"));
 });
 
 test("corrupt or unknown storage falls back to the seed", () => {

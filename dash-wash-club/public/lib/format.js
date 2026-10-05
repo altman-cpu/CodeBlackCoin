@@ -1,6 +1,6 @@
 /**
  * Pure helpers shared by the browser app and the Node test suite.
- * This module must stay DOM-free so it can run in both environments.
+ * This module must stay free of browser document objects so it runs in both environments.
  */
 
 export const PLANS = [
@@ -59,19 +59,7 @@ export function planName(member) {
 
 export function planPrice(member) {
   const plan = planByName(member?.plan);
-  return plan ? `$${plan.price.toFixed(2)}/mo` : "";
-}
-
-export function initials(name) {
-  const parts = String(name ?? "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (!parts.length) return "?";
-  return parts
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join("");
+  return plan ? `$${plan.price.toFixed(2)} per month` : "";
 }
 
 /** Free-text search across name, phone, site, code, plan and notes. */
@@ -129,16 +117,18 @@ export function validateMember(draft, others = [], currentId = null) {
   }
 
   const notes = String(draft?.notes ?? "").trim().slice(0, 240);
+  const vehicle = String(draft?.vehicle ?? "").trim().slice(0, 60);
+  const preferredLocation = String(draft?.preferredLocation ?? "").trim().slice(0, 80);
 
   return {
     ok: Object.keys(errors).length === 0,
     errors,
-    value: { name, phone, siteCode, memberCode, plan, status, notes },
+    value: { name, phone, siteCode, memberCode, plan, status, notes, vehicle, preferredLocation },
   };
 }
 
-/** "Sep 27, 2026" style formatting. */
-export function formatDateTime(iso, options = { month: "short", day: "numeric", year: "numeric" }) {
+/** "September 27, 2026" style formatting — month names in full, never shortened. */
+export function formatDateTime(iso, options = { month: "long", day: "numeric", year: "numeric" }) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat(undefined, options).format(date);
@@ -173,23 +163,27 @@ export function thisMonthCount(timestamps, now = new Date()) {
   }).length;
 }
 
+/** Midnight on the Monday of the week containing `value`. */
+export function weekStart(value = new Date()) {
+  const date = startOfDay(value);
+  const offset = (date.getDay() + 6) % 7; // Monday = 0
+  date.setDate(date.getDate() - offset);
+  // The week shifted by whole days can cross a daylight-saving change, so
+  // rebuild the value from its calendar parts instead of adding milliseconds.
+  return date;
+}
+
 /**
  * Bucket timestamps into per-week counts (Monday-based), oldest week first.
  * The last bucket is the current week.
  */
 export function weekBuckets(timestamps, weeks = 8, now = new Date()) {
   const buckets = new Array(weeks).fill(0);
-  const startOfWeek = (value) => {
-    const date = startOfDay(value);
-    const offset = (date.getDay() + 6) % 7; // Monday = 0
-    date.setDate(date.getDate() - offset);
-    return date;
-  };
-  const currentWeek = startOfWeek(now);
+  const currentWeek = weekStart(now);
   for (const iso of timestamps) {
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) continue;
-    const weeksAgo = Math.round((currentWeek - startOfWeek(date)) / 604800000);
+    const weeksAgo = Math.round((currentWeek - weekStart(date)) / 604800000);
     if (weeksAgo >= 0 && weeksAgo < weeks) buckets[weeks - 1 - weeksAgo] += 1;
   }
   return buckets;
