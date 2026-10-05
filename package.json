@@ -12,7 +12,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build"
+    "build": "react-scripts build",
+    "dash-wash-club": "node dash-wash-club/server.mjs",
+    "test:dash-wash-club": "cd dash-wash-club && node --test"
   },
   "browserslist": {
     "production": [">0.2%", "not dead"],

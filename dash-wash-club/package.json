@@ -1,0 +1,17 @@
+{
+  "name": "dash-wash-club",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DASH Car Wash Elite membership console — memberships, wash logging and Code 39 membership cards.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
